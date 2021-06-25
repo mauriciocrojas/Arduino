@@ -1,0 +1,110 @@
+//LiquidCrystal(rs, enable, d4, d5, d6, d7)
+#include <LiquidCrystal.h>
+#include <Servo.h>
+
+LiquidCrystal pantalla(12,13,2,3,4,5);
+Servo servoMotor1;
+Servo servoMotor2;
+Servo servoMotor3;
+
+  
+void setup()
+{  
+  
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(5, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(13, OUTPUT);
+  
+  pinMode(6, INPUT);
+  pinMode(7, INPUT);
+  pinMode(8, INPUT);
+
+
+  pantalla.begin(16, 2);
+  pantalla.setCursor(3,1);
+  pantalla.print("00:00:00");
+  
+  servoMotor1.attach(9);
+  servoMotor2.attach(10);
+  servoMotor3.attach(11);
+
+}
+
+long currentMillis = 0;
+long previousMillis = 0;
+
+int pulsadorAntes1=LOW;
+int pulsadorAntes2=LOW;
+int pulsadorAntes3=LOW;
+
+int horas = 0;
+int minutos=0;
+int segundos=0;
+
+void loop()
+{
+  
+  //--- Tomo tiempo inicial
+  currentMillis = millis();
+  
+  int pulsador1 = digitalRead(6);
+  int pulsador2 = digitalRead(7);
+  int pulsador3 = digitalRead(8);
+ 
+  servoMotor1.write(horas * 7.5);
+  servoMotor2.write(minutos * 3);
+  servoMotor3.write(segundos * 3);
+ 
+  //----- Horas ------
+  if (pulsador1 == HIGH && pulsadorAntes1 == LOW){
+   horas = limpiarContador(horas,4,3,24);
+  }
+  pulsadorAntes1 = pulsador1;
+  
+  //----- Minutos ------
+  if ( pulsador2==HIGH && pulsadorAntes2==LOW){
+    minutos = limpiarContador(minutos,7,6,60);
+  }
+  pulsadorAntes2=pulsador2;
+  
+ //------ Segundos -------
+  
+  ///--- Calculo si paso un segundo ----
+  
+  if ( (currentMillis - 1000 > previousMillis) || (pulsador3==HIGH && pulsadorAntes3==LOW) ){
+   segundos = limpiarContador(segundos,10,9,60);
+    if(segundos == 0){
+      //Actualizar minuto
+      minutos = limpiarContador(minutos,7,6,60);
+      if(minutos == 0){
+        horas = limpiarContador(horas,4,3,24);
+      }
+    }
+    //--- Actualizacion de tiempo
+    previousMillis = currentMillis;
+  }
+  pulsadorAntes3 = pulsador3;
+
+  delay(50);
+
+}
+
+int limpiarContador(int contador, int posicion1, int posicion2, int maximo){
+  contador++; //aumenta el contador
+  if(contador <= 9){ 
+  		pantalla.setCursor(posicion1,1);
+  }else{
+  	 	pantalla.setCursor(posicion2,1);
+  }
+  if(contador >= maximo){
+      	pantalla.setCursor(posicion2,1);
+   	   	contador = 0;
+   		pantalla.print(contador);
+  }
+ 
+  pantalla.print(contador); //se imprime 
+  return contador; 
+}
